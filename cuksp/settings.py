@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'knox',
     'accounts',
 ]
 
@@ -70,6 +72,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cuksp.wsgi.application'
 
+AUTH_USER_MODEL = 'accounts.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('knox.auth.TokenAuthentication',),
+}
+
+REST_KNOX = {
+    'TOKEN_TTL': None
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
