@@ -3,8 +3,8 @@ from django.http import QueryDict
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
-from accounts.models import Experience, Profile
-from .serializers import ExperienceSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer, UserSerializer
+from accounts.models import Education, Experience, Profile
+from .serializers import EducationSerializer, ExperienceSerializer, ProfileSerializer, RegistrationSerializer, LoginSerializer, UserSerializer
 from knox.models import AuthToken
 from rest_framework.generics import GenericAPIView
 
@@ -180,3 +180,71 @@ class ExperienceView(GenericAPIView):
             return Response({
                 'error': 'There is some error. Please try again'
             }, status.HTTP_400_BAD_REQUEST)
+
+
+#API for creating, updating, deleting ans getting education status
+class EducationView(GenericAPIView):
+    serializer_class = EducationSerializer
+    queryset = Education.objects.all()
+    permission_classes = [
+        permissions.IsAuthenticated
+    ]
+
+    def get(self, request):
+        try:
+            serializer = self.get_serializer(self.get_queryset().filter(user=request.user), many=True)
+
+            return Response(serializer.data)
+        except:
+            return Response({
+                'error': "There is some error"
+            }, status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        try:
+            if isinstance(request.data, QueryDict):
+                request.data._mutable = True
+
+            request.data.update({'user': request.user.id})
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            education = serializer.save()
+
+            return Response({
+                "education": self.get_serializer(education, context=self.get_serializer_context()).data
+            })
+        except:
+            return Response({
+                'error': 'There is some error. Please try again'
+            }, status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        try:
+            serializer = self.get_serializer(self.get_queryset().get(id=request.data["id"]), data=request.data, partial=True)
+            
+            serializer.is_valid(raise_exception=True)
+
+            education = serializer.save()
+
+            return Response({
+                'education':self.get_serializer(education, context=self.get_serializer_context()).data
+            })
+        except:
+            return Response({
+                "error": "There is some error. Please try again"
+            }, status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self, request):
+        try:
+            self.get_queryset().get(id=request.query_params['id']).delete()
+
+            return Response({
+                'message': 'Done'
+            }, status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({
+                "error": "There is some error. Please try again"
+            })
+

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Experience, User, Profile
+from .models import Education, Experience, User, Profile
 from django.contrib.auth import authenticate
 
 #user serializer to return proper user details to the frontend
@@ -54,5 +54,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
+        fields = '__all__'
+
+
+#Education serializer
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
         fields = '__all__'
         
