@@ -28,11 +28,24 @@ class Profile(models.Model):
     bio = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=60, default='Student')
     last_name = models.CharField(max_length=60, blank=True, null=True)
-    dob = models.DateTimeField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
     contact =models.PositiveIntegerField(blank=True, null=True)
     enrollment_number = models.CharField(max_length=20, blank=True, null=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     resume = models.FileField(upload_to='resume/', blank=True, null=True)
+    added_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'Profile for {self.id} created'
+
+
+class Experience(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    designation = models.CharField(max_length=100)
+    organisation = models.CharField(max_length=100)
+    from_date = models.DateField()
+    to_date = models.DateField()
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'experience added for user {self.user}'
