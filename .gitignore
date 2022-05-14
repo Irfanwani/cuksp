@@ -2,3 +2,4 @@ __pycache__/
 images/
 resume/
 db.sqlite3
+.env

@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from .views import AddressView, EducationView, ProjectView, RegistrationView, LoginView, ProfileView, ExperienceView
+from .views import AddressView, EducationView, ProjectView, RegistrationView, LoginView, ProfileView, ExperienceView, UserUpdateView
 
 
 urlpatterns = [
@@ -11,5 +11,6 @@ urlpatterns = [
     path('experience', ExperienceView.as_view()),
     path('education', EducationView.as_view()),
     path('projects', ProjectView.as_view()),
-    path('address', AddressView.as_view())
+    path('address', AddressView.as_view()),
+    path('update', UserUpdateView.as_view())
 ]

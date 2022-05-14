@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Address, Education, Experience, Projects, User, Profile
+from .models import Address, Categories, Education, Experience, Projects, User, Profile
 from django.contrib.auth import authenticate
 
 #user serializer to return proper user details to the frontend
@@ -24,7 +24,21 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        instance.set_password(validated_data['password'])
+        try:
+            email=validated_data['email']
+            instance.email=email
+        except:
+            pass
+        try:
+            username=validated_data['username']
+            instance.username=username
+        except:
+            pass
+        try:
+            password = validated_data['password']
+            instance.set_password(password)
+        except:
+            pass
         instance.save()
 
         return instance
@@ -76,3 +90,9 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = '__all__' 
+
+#Category Serializer
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = '__all__'

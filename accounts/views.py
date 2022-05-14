@@ -3,8 +3,8 @@ from django.http import QueryDict
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
-from accounts.models import Address, Categories, Education, Experience, Profile, Projects
-from .serializers import AddressSerializer, EducationSerializer, ExperienceSerializer, ProfileSerializer, ProjectSerializer, RegistrationSerializer, LoginSerializer, UserSerializer
+from accounts.models import Address, Categories, Education, Experience, Profile, Projects, User
+from .serializers import AddressSerializer, CategorySerializer, EducationSerializer, ExperienceSerializer, ProfileSerializer, ProjectSerializer, RegistrationSerializer, LoginSerializer, UserSerializer
 from knox.models import AuthToken
 from rest_framework.generics import GenericAPIView
 
@@ -23,7 +23,42 @@ class RegistrationView(GenericAPIView):
             'user': UserSerializer(user, context=self.get_serializer_context()).data,
             "token": token
         })
+    
+# API for updating and deleting user details
+class UserUpdateView(GenericAPIView):
+    serializer_class = RegistrationSerializer
+    queryset = User.objects.all()
+    permission_classes = [
+        permissions.IsAuthenticated
+    ]
+    def put(self, request):
+        try:
+            serializer = self.get_serializer(self.get_queryset().get(id=request.user.id), data=request.data, partial=True)
 
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+
+            return Response({
+                'user': self.get_serializer(user, context=self.get_serializer_context()).data
+            })
+        except:
+            return Response({
+                'error': "There is some error. Please try again."
+            }, status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        try:
+            self.get_queryset().get(id=request.user.id).delete()
+
+            return Response({
+                'message': "Done"
+            })
+        except:
+            return Response({
+                'error': 'There is some problem. Please try again.'
+            }, status.HTTP_400_BAD_REQUEST)
+
+            
 # API for Logging in a user
 class LoginView(GenericAPIView):
     serializer_class  = LoginSerializer
@@ -54,6 +89,7 @@ class ProfileView(GenericAPIView):
         try:
             serializer = self.get_serializer(self.get_queryset().get(id=request.user.id))
 
+
             return Response(serializer.data)
         except:
             return Response({
@@ -71,7 +107,8 @@ class ProfileView(GenericAPIView):
             serializer.is_valid(raise_exception=True)
 
             try:
-                Categories.objects.create(id=request.user.id, category=request.data['category'])
+                category = Categories.objects.create(id=request.user, category=request.data['category'])
+                cat = CategorySerializer(category).data
             except:
                 return Response({
                     'error': 'Please check the CATEGORY field.'
@@ -79,7 +116,8 @@ class ProfileView(GenericAPIView):
 
             profile = serializer.save()
             return Response({
-                'profile': self.get_serializer(profile, context=self.get_serializer_context()).data
+                'profile': self.get_serializer(profile, context=self.get_serializer_context()).data,
+                'category': cat
             })
         except:
             return Response({
@@ -97,8 +135,11 @@ class ProfileView(GenericAPIView):
 
             profile = serializer.save()
 
+            category = CategorySerializer(Categories.objects.get(id=request.user)).data
+
             return Response({
-                'profile': ProfileSerializer(profile, context=self.get_serializer_context()).data
+                'profile': ProfileSerializer(profile, context=self.get_serializer_context()).data,
+                'category': category
             })
         except:
             return Response({
@@ -108,6 +149,7 @@ class ProfileView(GenericAPIView):
     def delete(self, request):
         try:
             self.get_queryset().get(id=request.user.id).delete()
+            Categories.objects.get(id=request.user).delete()
 
             return Response({
                 'message': 'Done'
@@ -359,7 +401,7 @@ class AddressView(GenericAPIView):
                 "error": "There is some error. Please try again"
             }, status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request):
+    def put(self, request):
         try:
             serializer = self.get_serializer(self.get_queryset().get(user=request.user, id=request.data['id']), data=request.data, partial=True)
 
@@ -378,7 +420,7 @@ class AddressView(GenericAPIView):
     def delete(self, request):
         try:
                 
-            self.get_queryset().get(user=request.user, id=request.data['id']).delete()
+            self.get_queryset().get(user=request.user, id=request.query_params['id']).delete()
 
             return Response({
                 'message': 'Done'
@@ -389,4 +431,3 @@ class AddressView(GenericAPIView):
                 'error': "There is some error. Please try again"
             }, status.HTTP_400_BAD_REQUEST)
 
-            
