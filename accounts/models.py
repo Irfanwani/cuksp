@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import datetime
 
+from django.forms import ValidationError
+
 # Create your models here.
 
 #Creating a custom user model with some variations from the original one (like unique email, username field changed to email)
@@ -23,6 +25,10 @@ GENDER_CHOICES = (
     ('Other', 'Other')
 )
 
+def validate_number(value):
+    if len(str(value)) != 10:
+        raise ValidationError('This is not a valid number.')
+
 class Profile(models.Model):
     id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     dp = models.ImageField(upload_to='images/', blank=True, null=True)
@@ -30,7 +36,7 @@ class Profile(models.Model):
     first_name = models.CharField(max_length=60, default='Student')
     last_name = models.CharField(max_length=60, blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
-    contact =models.PositiveIntegerField(blank=True, null=True)
+    contact =models.PositiveIntegerField(blank=True, null=True, validators=[validate_number])
     enrollment_number = models.CharField(max_length=20, blank=True, null=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     resume = models.FileField(upload_to='resume/', blank=True, null=True)
@@ -75,4 +81,37 @@ class Projects(models.Model):
     added_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Project added for user {self.user}" 
+        return f"Project added for user {self.user}"
+
+
+
+def validate_pincode(value):
+    if len(str(value)) != 6:
+        raise ValidationError('This is not a valid pincode.')
+
+class Address(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    country = models.CharField(max_length=64)
+    state = models.CharField(max_length=64)
+    city = models.CharField(max_length=64)
+    street_address = models.CharField(max_length=100)
+    pincode = models.PositiveIntegerField(validators=[validate_pincode])
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'address details added for {self.user}' 
+
+
+CATEGORY_CHOICES = (
+    ("OM", "OM"),
+    ("OBC", "OBC"),
+    ("ST", "ST"),
+    ("SC", "SC"),
+    ("Other", "Other")
+)
+class Categories(models.Model):
+    id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    category = models.CharField(max_length=64, choices=CATEGORY_CHOICES)
+
+    def __str__(self):
+        return f'category added for user with id {self.id}'
