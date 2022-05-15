@@ -3,10 +3,19 @@ from django.http import QueryDict
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
-from accounts.models import Address, Categories, Education, Experience, Profile, Projects, User
+from accounts.models import Address, Categories, Education, Experience, PasswordCodes, Profile, Projects, User
 from .serializers import AddressSerializer, CategorySerializer, EducationSerializer, ExperienceSerializer, ProfileSerializer, ProjectSerializer, RegistrationSerializer, LoginSerializer, UserSerializer
 from knox.models import AuthToken
 from rest_framework.generics import GenericAPIView
+from django.core.mail import send_mail
+from django.conf import settings
+
+import random
+# Code generator function
+def code_generator():
+    code = random.randint(1000, 10000)
+    return code
+
 
 #API for registration of a new user
 class RegistrationView(GenericAPIView):
@@ -24,6 +33,7 @@ class RegistrationView(GenericAPIView):
             "token": token
         })
     
+
 # API for updating and deleting user details
 class UserUpdateView(GenericAPIView):
     serializer_class = RegistrationSerializer
@@ -58,7 +68,66 @@ class UserUpdateView(GenericAPIView):
                 'error': 'There is some problem. Please try again.'
             }, status.HTTP_400_BAD_REQUEST)
 
+
+#API for password reset
+class PasswordResetView(GenericAPIView):
+    serializer_class = RegistrationSerializer
+    queryset = PasswordCodes.objects.all()
+
+    def post(self, request):
+        try:
+            email = request.data['email']
+            try:
+                User.objects.get(email=email)
+            except:
+                return Response({
+                    'error': "There is no user registered with this email. Please provide a valid registered email."
+                }, status.HTTP_406_NOT_ACCEPTABLE)
+
+            code = code_generator()
+            self.get_queryset().filter(user=User.objects.get(email=email)).delete()
+
+            self.get_queryset().create(user=User.objects.get(email=email), code=code)
+            send_mail('Password reset code', f'Here is your passowd reset code: {code}', settings.DEFAULT_FROM_EMAIL, [email])
+
+            return Response({
+                'message': "code send to email"
+            })
+        except:
+            return Response({
+                'error': "There is some error. Please try again"
+            }, status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        try:
+            email = request.data['email']
+            code = request.data['code']
+            db_code = self.get_queryset().get(user=User.objects.get(email=email)).code
             
+            if code == db_code:
+                serializer = self.get_serializer(User.objects.get(email=email), data=request.data, partial=True)
+
+                serializer.is_valid(raise_exception=True)
+                user = serializer.save()
+
+                self.get_queryset().filter(user=User.objects.get(email=email)).delete()
+
+                _, token = AuthToken.objects.create(user)
+
+                return Response({
+                    'user': self.get_serializer(user, context=self.get_serializer_context()).data,
+                    'token': token
+                })
+            else:
+                return Response({
+                    'error': "Please provide a valid code. Provided code is incorrect"
+                }, status.HTTP_406_NOT_ACCEPTABLE)
+        except:
+            return Response({
+                'error': 'There is some error. Please try again'
+            }, status.HTTP_400_BAD_REQUEST)
+
+
 # API for Logging in a user
 class LoginView(GenericAPIView):
     serializer_class  = LoginSerializer

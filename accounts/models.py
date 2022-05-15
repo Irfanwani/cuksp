@@ -115,3 +115,11 @@ class Categories(models.Model):
 
     def __str__(self):
         return f'category added for user with id {self.id}'
+
+
+class PasswordCodes(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.PositiveIntegerField()
+
+    def __str__(self):
+        f'{self.code} added for user {self.user}'
