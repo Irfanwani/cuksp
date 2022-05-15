@@ -3,3 +3,4 @@ images/
 resume/
 db.sqlite3
 .env
+Procfile.windows

@@ -88,7 +88,7 @@ class PasswordResetView(GenericAPIView):
             self.get_queryset().filter(user=User.objects.get(email=email)).delete()
 
             self.get_queryset().create(user=User.objects.get(email=email), code=code)
-            send_mail('Password reset code', f'Here is your passowd reset code: {code}', settings.DEFAULT_FROM_EMAIL, [email])
+            send_mail(subject='Password reset code', message=f'Here is your passowd reset code: {code}', from_email=getattr(settings, 'DEFAULT_FROM_EMAIL'), recipient_list=[email])
 
             return Response({
                 'message': "code send to email"
